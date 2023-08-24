@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "398389795158",
+    "project_id": "jaya-fsm",
+    "storage_bucket": "jaya-fsm.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398389795158:android:f34d74494707a99ba45ef7",
+        "android_client_info": {
+          "package_name": "com.jayabreezefsm"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "398389795158-v7jlbotogf3j8rtihp5js3ogv18s8e8u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-B2ufrSbC6Hr2uIbpm4ASN1Nrs0s5TbA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "398389795158-v7jlbotogf3j8rtihp5js3ogv18s8e8u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
