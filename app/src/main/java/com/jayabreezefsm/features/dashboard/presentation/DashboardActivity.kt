@@ -382,11 +382,17 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
             //println("fcm_token " + token.toString());
             Timber.d("token : " + token.toString())
         })
-        println("load_frag " + mFragType.toString() + "     " + Pref.user_id.toString() );
 
-        //val distance = LocationWizard.getDistance(22.4339117,	87.3366233, 22.52156	,87.3279733)
-        //Pref.isExpenseFeatureAvailable = false
-        Timber.d("dash_frag ${AppUtils.getCurrentDateTime()} ${Pref.user_name} ${Pref.UserLoginContactID}")
+        var loc1 = Location("")
+        var loc2 = Location("")
+        loc1.latitude = 22.5689369
+        loc1.longitude = 88.4316907
+        loc2.latitude = 22.5689547
+        loc2.longitude = 88.4316994
+        var dt = FTStorageUtils.checkShopPositionWithinRadious(loc1, loc2, 200)
+
+        println("load_frag " + mFragType.toString() + "     " + Pref.user_id.toString() + " "+dt );
+
         if (addToStack) {
             mTransaction.add(R.id.frame_layout_container, getFragInstance(mFragType, initializeObject, true)!!, mFragType.toString())
             mTransaction.addToBackStack(mFragType.toString()).commitAllowingStateLoss()
@@ -965,6 +971,7 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
         LocalBroadcastManager.getInstance(this).registerReceiver(fcmReceiver_leave, IntentFilter("FCM_ACTION_RECEIVER_LEAVE"))
         LocalBroadcastManager.getInstance(this).registerReceiver(fcmReceiver_leave_status, IntentFilter("FCM_ACTION_RECEIVER_LEAVE_STATUS"))
         LocalBroadcastManager.getInstance(this).registerReceiver(fcmReceiver_quotation_approval, IntentFilter("FCM_ACTION_RECEIVER_quotation_approval"))
+        LocalBroadcastManager.getInstance(this).registerReceiver(fcm_ACTION_RECEIVER_LEAD, IntentFilter("FCM_ACTION_RECEIVER_LEAD"))
         LocalBroadcastManager.getInstance(this).registerReceiver(idealLocReceiver, IntentFilter("IDEAL_LOC_BROADCAST"))
         LocalBroadcastManager.getInstance(this).registerReceiver(attendNotiReceiver, IntentFilter("IDEAL_ATTEND_BROADCAST"))
         LocalBroadcastManager.getInstance(this).registerReceiver(collectionAlertReceiver, IntentFilter("ALERT_RECIEVER_BROADCAST"))
@@ -1318,7 +1325,10 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
                                         loadFragment(FragType.MicroLearningListFragment, false, "")
                                 }, 500)
                             }else if (intent.getStringExtra("TYPE").equals("lead_work", ignoreCase = true)) {
-                                loadFragment(FragType.LeadFrag, false, "")
+                                Handler().postDelayed(Runnable {
+                                    if (getFragment() != null && getFragment() !is LeadFrag)
+                                        loadFragment(FragType.LeadFrag, false, "")
+                                }, 500)
                             }
                             else if (intent.getStringExtra("TYPE").equals("clearData", ignoreCase = true)) {
                                 isClearData = true
@@ -4079,9 +4089,9 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
         try {
             val shareIntent = Intent(Intent.ACTION_SEND)
 //        val phototUri = Uri.parse(localAbsoluteFilePath)
-            //val fileUrl = Uri.parse(File(Environment.getExternalStorageDirectory(), "xdemologsample/log").path);
+            //val fileUrl = Uri.parse(File(Environment.getExternalStorageDirectory(), "xjayabreezefsmlogsample/log").path);
             //27-09-2021
-//            val fileUrl = Uri.parse(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xdemologsample/log").path);
+//            val fileUrl = Uri.parse(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xjayabreezefsmlogsample/log").path);
 //            val fileUrl = Uri.parse(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
 //                BuildConfig.APPLICATION_ID+"/Log/Fsmlog.html").path);
             var currentDBPath="/data/user/0/com.jayabreezefsm/files/Fsmlog.html"
@@ -4118,8 +4128,8 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
             intent.putExtra(Intent.EXTRA_SUBJECT, "Here are some files.")
             intent.type = "image/*"
 
-            val fileUrl1 = Uri.parse(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xdemologsample/log").path);
-            val fileUrl2 = Uri.parse(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xdemologsample/log.bak.1").path);
+            val fileUrl1 = Uri.parse(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xjayabreezefsmlogsample/log").path);
+            val fileUrl2 = Uri.parse(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xjayabreezefsmlogsample/log.bak.1").path);
             val files = ArrayList<Uri>()
             if (!File(fileUrl1.path).exists()) {
                 return
@@ -10562,6 +10572,9 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
                     (getFragment() as MemberShopListFragment).updateAdapter()
                 else if (getFragment() != null && getFragment() is OfflineShopListFragment)
                     (getFragment() as OfflineShopListFragment).updateAdapter()
+                else if(getFragment() != null && getFragment() is MemberAllShopListFragment){
+                    (getFragment() as MemberAllShopListFragment).updateAdapter()
+                }
             }
         }
     }
@@ -12172,6 +12185,20 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
 
     private var permissionUtils: PermissionUtils? = null
     private fun initPermissionCheck() {
+
+        //begin mantis id 26741 Storage permission updation Suman 22-08-2023
+        var permissionList = arrayOf<String>( Manifest.permission.CAMERA)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            permissionList += Manifest.permission.READ_MEDIA_IMAGES
+            permissionList += Manifest.permission.READ_MEDIA_AUDIO
+            permissionList += Manifest.permission.READ_MEDIA_VIDEO
+        }else{
+            permissionList += Manifest.permission.WRITE_EXTERNAL_STORAGE
+            permissionList += Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+//end mantis id 26741 Storage permission updation Suman 22-08-2023
+
         permissionUtils = PermissionUtils(mContext as Activity, object : PermissionUtils.OnPermissionListener {
             override fun onPermissionGranted() {
                 if (!isCodeScan)
@@ -12185,10 +12212,24 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
             override fun onPermissionNotGranted() {
                 (mContext as DashboardActivity).showSnackMessage(getString(R.string.accept_permission))
             }
-
-        }, arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+// mantis id 26741 Storage permission updation Suman 22-08-2023
+        },permissionList)// arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
     }
     private fun initPermissionCheckRubyCUstomi(shopNameByID: String) {
+
+        //begin mantis id 26741 Storage permission updation Suman 22-08-2023
+        var permissionList = arrayOf<String>( Manifest.permission.CAMERA)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            permissionList += Manifest.permission.READ_MEDIA_IMAGES
+            permissionList += Manifest.permission.READ_MEDIA_AUDIO
+            permissionList += Manifest.permission.READ_MEDIA_VIDEO
+        }else{
+            permissionList += Manifest.permission.WRITE_EXTERNAL_STORAGE
+            permissionList += Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+//end mantis id 26741 Storage permission updation Suman 22-08-2023
+
         permissionUtils = PermissionUtils(mContext as Activity, object : PermissionUtils.OnPermissionListener {
             override fun onPermissionGranted() {
                 if (!isCodeScan)
@@ -12206,8 +12247,8 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
             override fun onPermissionNotGranted() {
                 (mContext as DashboardActivity).showSnackMessage(getString(R.string.accept_permission))
             }
-
-        }, arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+// mantis id 26741 Storage permission updation Suman 22-08-2023
+        },permissionList)// arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
     }
 
     fun captureImage() {
@@ -12684,7 +12725,7 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
 
     fun generateNoteOnSD(context: Context?, sFileName: String?, sBody: String?) {
         try {
-            val root =  File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xdemologsample/log" + ".txt")
+            val root =  File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xjayabreezefsmlogsample/log" + ".txt")
             if (!root.exists()) {
                 root.mkdirs()
             }
@@ -12708,7 +12749,7 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
 //        }
         val bytes = ByteArrayOutputStream()
 //        bm!!.compress(Bitmap.CompressFormat.JPEG, 90, bytes)
-        var destination = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xdemologsample/log")
+        var destination = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "xjayabreezefsmlogsample/log")
         val fo: FileOutputStream
         val fo1:FileWriter
         try {
@@ -12849,6 +12890,20 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
     }
 
     private fun initCameraPermissionCheck() {
+
+        //begin mantis id 26741 Storage permission updation Suman 22-08-2023
+        var permissionList = arrayOf<String>( Manifest.permission.CAMERA)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            permissionList += Manifest.permission.READ_MEDIA_IMAGES
+            permissionList += Manifest.permission.READ_MEDIA_AUDIO
+            permissionList += Manifest.permission.READ_MEDIA_VIDEO
+        }else{
+            permissionList += Manifest.permission.WRITE_EXTERNAL_STORAGE
+            permissionList += Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+//end mantis id 26741 Storage permission updation Suman 22-08-2023
+
         permissionUtils = PermissionUtils(this, object : PermissionUtils.OnPermissionListener {
             override fun onPermissionGranted() {
                 captureFrontImage()
@@ -12857,8 +12912,8 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
             override fun onPermissionNotGranted() {
                 showSnackMessage(getString(R.string.accept_permission))
             }
-
-        }, arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+// mantis id 26741 Storage permission updation Suman 22-08-2023
+        },permissionList)// arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
     }
 
     private fun uploadSelfie(file: File) {
@@ -13016,6 +13071,13 @@ class DashboardActivity : BaseActivity(), View.OnClickListener, BaseNavigation, 
                 getQutoDtlsBeforePDF(CustomStatic.QutoNoFromNoti)
             }
             //End of Rev 3.0 MyFirebaseMessagingService AppV 4.0.8 Suman    26/04/2023 mail repetation fix 25923
+        }
+    }
+
+
+    private val fcm_ACTION_RECEIVER_LEAD = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            logo.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.shake))
         }
     }
 

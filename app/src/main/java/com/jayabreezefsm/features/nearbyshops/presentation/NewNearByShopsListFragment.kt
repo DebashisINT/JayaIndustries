@@ -33,7 +33,7 @@ class NewNearByShopsListFragment : BaseFragment(), View.OnClickListener {
     private lateinit var programFab3: FloatingActionButton
     private lateinit var svSearchForShop: SearchView
     private lateinit var progress_wheel: com.pnikosis.materialishprogress.ProgressWheel
-    private lateinit var lldemoShoListLayout: LinearLayout
+    private lateinit var lljayabreezefsmShoListLayout: LinearLayout
 
 
     private lateinit var getFloatingVal: ArrayList<String>
@@ -50,7 +50,7 @@ class NewNearByShopsListFragment : BaseFragment(), View.OnClickListener {
         val view = inflater.inflate(R.layout.fragment_nearby_shops_v1, container, false)
         initView(view)
 
-        attachdemoData(view)
+        attachjayabreezefsmData(view)
 
 
         return view
@@ -157,11 +157,11 @@ class NewNearByShopsListFragment : BaseFragment(), View.OnClickListener {
         }
     }
 
-    private fun attachdemoData(view: View) {
-        lldemoShoListLayout = view.findViewById(R.id.lldemoShoListLayout)
+    private fun attachjayabreezefsmData(view: View) {
+        lljayabreezefsmShoListLayout = view.findViewById(R.id.lljayabreezefsmShoListLayout)
         val layoutInflater = layoutInflater
         for (i in 0..5) {
-            val view = layoutInflater.inflate(R.layout.row_shop_list, lldemoShoListLayout, false)
+            val view = layoutInflater.inflate(R.layout.row_shop_list, lljayabreezefsmShoListLayout, false)
             lateinit var myshop_name_TV: TextView
             lateinit var total_visited_value_TV: TextView
             lateinit var last_visited_date_TV: TextView
@@ -251,7 +251,7 @@ class NewNearByShopsListFragment : BaseFragment(), View.OnClickListener {
                 }
             }
 
-            lldemoShoListLayout.addView(view)
+            lljayabreezefsmShoListLayout.addView(view)
         }
 
     }

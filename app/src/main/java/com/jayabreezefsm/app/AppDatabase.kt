@@ -67,7 +67,7 @@ import com.jayabreezefsm.features.taskManagement.model.TaskManagmentEntity
         ShopDtlsTeamEntity::class, CollDtlsTeamEntity::class, BillDtlsTeamEntity::class, OrderDtlsTeamEntity::class,
         TeamAllShopDBModelEntity::class, DistWiseOrderTblEntity::class, NewGpsStatusEntity::class,ShopExtraContactEntity::class,ProductOnlineRateTempEntity::class, TaskManagmentEntity::class,
     VisitRevisitWhatsappStatus::class),
-        version = 1, exportSchema = false)
+        version = 2, exportSchema = false)
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun addShopEntryDao(): AddShopDao
@@ -219,7 +219,7 @@ abstract class AppDatabase : RoomDatabase() {
                         // allow queries on the main thread.
                         // Don't do this on a real app! See PersistenceBasicSample for an example.
                         .allowMainThreadQueries()
-                        .addMigrations()
+                        .addMigrations( MIGRATION_1_2)
 //                        .fallbackToDestructiveMigration()
                         .build()
             }
@@ -232,6 +232,15 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun destroyInstance() {
             INSTANCE = null
+        }
+
+        val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("alter table product_online_rate_temp_table ADD COLUMN Qty_per_Unit REAL")
+                database.execSQL("alter table product_online_rate_temp_table ADD COLUMN Scheme_Qty REAL")
+                database.execSQL("alter table product_online_rate_temp_table ADD COLUMN Effective_Rate REAL")
+                database.execSQL("alter table shop_visit_revisit_whatsapp_status ADD COLUMN transactionId TEXT NOT NULL DEFAULT '' ")
+            }
         }
 
     }

@@ -13,6 +13,8 @@ import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.RelativeLayout
 import com.android.volley.AuthFailureError
 import com.android.volley.Response
@@ -27,6 +29,7 @@ import com.jayabreezefsm.app.*
 import com.jayabreezefsm.app.domain.MemberShopEntity
 import com.jayabreezefsm.app.types.FragType
 import com.jayabreezefsm.app.utils.AppUtils
+import com.jayabreezefsm.app.utils.FTStorageUtils
 import com.jayabreezefsm.app.utils.Toaster
 import com.jayabreezefsm.base.presentation.BaseActivity
 import com.jayabreezefsm.base.presentation.BaseFragment
@@ -34,6 +37,7 @@ import com.jayabreezefsm.features.addAttendence.api.addattendenceapi.AddAttenden
 import com.jayabreezefsm.features.addAttendence.model.GetReportToFCMResponse
 import com.jayabreezefsm.features.addshop.presentation.AccuracyIssueDialog
 import com.jayabreezefsm.features.dashboard.presentation.DashboardActivity
+import com.jayabreezefsm.features.location.LocationWizard
 import com.jayabreezefsm.features.location.SingleShotLocationProvider
 import com.jayabreezefsm.features.member.api.TeamRepoProvider
 import com.jayabreezefsm.features.member.model.TeamShopListDataModel
@@ -82,6 +86,10 @@ class MemberAllShopListFragment : BaseFragment() {
     private var isAddressUpdating = false
     private var dialog: AccuracyIssueDialog? = null
 
+    private lateinit var radioG : RadioGroup
+    private lateinit var radioBtnAll:RadioButton
+    private lateinit var radioBtnNearBy:RadioButton
+
     val shopIdList: MutableList<String> by lazy {
         listOf<String>().toMutableList()
     }
@@ -121,7 +129,12 @@ class MemberAllShopListFragment : BaseFragment() {
         CustomStatic.TeamUserSelect_user_id = userId
 
         isBackPressed = false
-        getTeamShopList()
+        if(CustomStatic.IsTeamAllParty){
+            callShopListApi(true)
+        }else{
+            getTeamShopList()
+        }
+
         (mContext as DashboardActivity).setSearchListener(object : SearchListener {
             override fun onSearchQueryListener(query: String) {
                 if (query.isBlank()) {
@@ -188,6 +201,10 @@ class MemberAllShopListFragment : BaseFragment() {
     // 1.0 MicroLearningListFragment AppV 4.0.7 mantis 0025683 end
 
     private fun initView(view: View) {
+        radioG = view.findViewById(R.id.radio_grp)
+        radioBtnAll= view.findViewById(R.id.rb_total_shop)
+        radioBtnNearBy= view.findViewById(R.id.rb_visit_shop)
+
         rv_team_shop_list = view.findViewById(R.id.rv_team_shop_list)
         rv_team_shop_list.layoutManager = LinearLayoutManager(mContext)
 
@@ -197,6 +214,7 @@ class MemberAllShopListFragment : BaseFragment() {
         tv_shop_path = view.findViewById(R.id.tv_shop_path)
        // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 start
         tv_view_all_shoplist = view.findViewById(R.id.tv_view_all_shop)
+        tv_view_all_shoplist.visibility = View.GONE
 // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 end
         progress_wheel = view.findViewById(R.id.progress_wheel)
         progress_wheel.stopSpinning()
@@ -224,9 +242,21 @@ class MemberAllShopListFragment : BaseFragment() {
         tv_shop_count.text = "Total " + Pref.shopText + "(s): 0"
         tv_no_data_available.text = "No " + Pref.shopText + " Available"
       // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 start
-        tv_view_all_shoplist.setOnClickListener {
-            callShopListApi()
+        /*tv_view_all_shoplist.setOnClickListener {
+            callShopListApi(true)
+            radioBtnAll.isSelected = true
+            radioBtnAll.isChecked = true
+            radioG.visibility = View.VISIBLE
+            radioBtnNearBy.text = "Nearby"
         }
+
+        radioBtnAll.setOnCheckedChangeListener { buttonView, isChecked ->
+            if(isChecked){
+                callShopListApi(true)
+            }else{
+                callShopListApi(false)
+            }
+        }*/
         // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 end
     }
 
@@ -291,7 +321,7 @@ class MemberAllShopListFragment : BaseFragment() {
     }
 
 // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 start
-    private fun callShopListApi() {
+    private fun callShopListApi(isAll:Boolean) {
         println("xyz - getListFromDatabase end" + AppUtils.getCurrentDateTime());
         val repository = ShopListRepositoryProvider.provideShopListRepository()
         progress_wheel.spin()
@@ -323,7 +353,16 @@ class MemberAllShopListFragment : BaseFragment() {
                                     all_shop_list.add(newItem)
                             }
 
-                           initAdapter(all_shop_list,true)
+                            if(isAll){
+                                initAdapter(all_shop_list,true)
+                            }else{
+                                var loc = Location("")
+                                loc.latitude = Pref.current_latitude.toDouble()
+                                loc.longitude = Pref.current_longitude.toDouble()
+                                getNearbyShopList(loc,all_shop_list)
+                            }
+
+
 
                         } else{
                             // No data found
@@ -337,6 +376,33 @@ class MemberAllShopListFragment : BaseFragment() {
         )
     }
     // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 end
+
+    private fun getNearbyShopList(location: Location, allShopList: ArrayList<TeamShopListDataModel>) {
+
+        val newShopList = ArrayList<TeamShopListDataModel>()
+
+        allShopList?.takeIf { it.size > 0 }?.let {
+            it.forEach { teamShop ->
+                val shopLat = teamShop.shop_lat.toDouble()
+                val shopLong = teamShop.shop_long.toDouble()
+                if (shopLat != null && shopLong != null) {
+                    val shopLocation = Location("")
+                    shopLocation.let {
+                        it.latitude = shopLat
+                        it.longitude = shopLong
+                        FTStorageUtils.checkShopPositionWithinRadious(location, it, LocationWizard.NEARBY_RADIUS)
+                    }.takeIf { it }?.apply {
+                        newShopList.add(teamShop)
+                    }
+                }
+            }
+        } ?: let {
+            Timber.d("====empty shop list (Local Shop List)======")
+        }
+
+        initAdapter(newShopList,true)
+    }
+
     @SuppressLint("SetTextI18n")
     private fun initAdapter(shop_list: ArrayList<TeamShopListDataModel>,isViewAll : Boolean) {
         tv_no_data_available.visibility = View.GONE
@@ -650,5 +716,13 @@ class MemberAllShopListFragment : BaseFragment() {
         }
 
         MySingleton.getInstance(mContext)!!.addToRequestQueue(jsonObjectRequest)
+    }
+
+    fun updateAdapter() {
+        callShopListApi(true)
+        radioBtnAll.isSelected = true
+        radioBtnAll.isChecked = true
+        radioG.visibility = View.VISIBLE
+        radioBtnNearBy.text = "Nearby"
     }
 }

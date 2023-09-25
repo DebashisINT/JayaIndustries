@@ -79,11 +79,13 @@
         android:textSize="@dimen/_12sdp"
         android:layout_marginLeft="@dimen/_10sdp"
         android:layout_marginTop="@dimen/_5sdp"/>
+
     <com.jayabreezefsm.widgets.AppCustomTextView
         android:id="@+id/tv_view_all_shop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
+        android:visibility="gone"
         android:text="Show All Party"
         android:layout_below="@+id/tv_shop_path"
         android:textColor="@color/colorPrimary"
@@ -92,6 +94,7 @@
         android:layout_marginRight="@dimen/_10sdp"
         android:layout_marginTop="@dimen/_5sdp"/>
 </LinearLayout>
+
    <!-- // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 end
 -->
     <androidx.recyclerview.widget.RecyclerView

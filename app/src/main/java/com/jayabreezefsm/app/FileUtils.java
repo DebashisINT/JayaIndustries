@@ -618,11 +618,11 @@ public class FileUtils {
     }
 
 
-    public static String getdemoCardJson(Context mContext) {
+    public static String getjayabreezefsmCardJson(Context mContext) {
         String bufferString = "";
         try {
             byte[] buffer;
-            InputStream is = mContext.getAssets().open("demoCardData.json");
+            InputStream is = mContext.getAssets().open("jayabreezefsmCardData.json");
             int size = is.available();
             buffer = new byte[size];
             is.read(buffer);

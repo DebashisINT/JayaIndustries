@@ -223,7 +223,7 @@ class AppUtils {
             //val storageDir = File(Environment.getExternalStorageDirectory().toString()
                     //+ File.separator + "fieldtrackingsystem" + File.separator)
             //27-09-2021
-            val storageDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + File.separator + "demoApp/fieldtrackingsystem" + File.separator)
+            val storageDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + File.separator + "jayabreezefsmApp/fieldtrackingsystem" + File.separator)
             storageDir.mkdirs()
 
             // Save a file: path for use with ACTION_VIEW intents
@@ -3109,6 +3109,13 @@ class AppUtils {
             var agoDate = calendar.time
             val dateFormat = SimpleDateFormat("yyyy-MM-dd")
             return dateFormat.format(agoDate).toString()
+        }
+
+        fun getDaysAgo(daysAgo: Int): Date {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_YEAR, -daysAgo)
+
+            return calendar.time
         }
 
     }

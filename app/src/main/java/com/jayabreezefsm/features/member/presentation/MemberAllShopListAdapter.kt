@@ -291,7 +291,7 @@ class MemberAllShopListAdapter(private val context: Context, private val teamSho
                 }
 
 // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 start
-                val shopLocation = Location("")
+               /* val shopLocation = Location("")
                 shopLocation.latitude = teamShopList[adapterPosition].shop_lat.toDouble()
                 shopLocation.longitude = teamShopList[adapterPosition].shop_long.toDouble()
                 val myLoc = Location("")
@@ -315,7 +315,7 @@ class MemberAllShopListAdapter(private val context: Context, private val teamSho
 
                 visit_rl.setOnClickListener {
                     onVisitShopClick(teamShopList[adapterPosition])
-                }
+                }*/
                 // 4.0 MemberAllShopListFragment tufan 02-08-2023 AppV 4.1.6 mantis 0026651 end
             }
 
